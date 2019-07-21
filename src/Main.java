@@ -14,13 +14,11 @@ public class Main {
     private static int count = 0;
 
     public static void main(String[] args) {
+        System.out.println("Enter the main directory:");
         Scanner scanner = new Scanner(System.in);
         String mainDir = scanner.next();
         System.out.println("Ok, wait for some time...");
-        String[] directorDirs = getAllDirectories(mainDir);
-        for (String directorDir : directorDirs) {
-            fixDirectory(mainDir + "\\" + directorDir);
-        }
+        fixDirectory(mainDir);
         System.out.println(count + " Folders fixed!");
     }
 
@@ -34,49 +32,28 @@ public class Main {
         });
     }
 
-    private static void fixDirectory(String directorDir) {
-        String[] movieDirs = getAllDirectories(directorDir);
-
+    private static void fixDirectory(String mainDir) {
+        String[] movieDirs = getAllDirectories(mainDir);
         for (String movieDir : movieDirs) {
-            fixName(directorDir, movieDir);
-            fixImages(directorDir + "\\" + movieDir);
+            fixName(mainDir, movieDir);
         }
     }
 
-    private static void fixImages(String movieDir) {
-
-        File file = new File(movieDir);
-        String[] images = file.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File current, String name) {
-                return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png");
-            }
-        });
-        if (images == null || images.length ==0)
-            return;
-        for (int i = 0; i < images.length; i++) {
-            String image = images[i];
-            String format = image.substring(image.lastIndexOf('.'), image.length());
-            File folder = new File(movieDir + '\\' + image);
-            File newFolder = new File(movieDir + "\\" + (i + 1) + format);
-            folder.renameTo(newFolder);
-        }
-    }
-
-    private static void fixName(String directorDir, String movieDir) {
+    private static void fixName(String mainDir, String movieDir) {
 //        if (isOk(movieDir)) {
 //            return;
 //        }
         String correctedName = correctName(movieDir);
+        System.out.println(correctedName);
         String res = searchMovie(correctedName);
         if (res == null) {
             res = searchMovie(correctedName);
             if (res == null)
-                System.out.println("Unable to find in Google: " + directorDir + "\\" + movieDir);
+                System.out.println("Unable to find in Google: " + mainDir + "\\" + movieDir);
             else
-                renameFolder(directorDir, movieDir, res);
+                renameFolder(mainDir, movieDir, res);
         } else {
-            renameFolder(directorDir, movieDir, res);
+            renameFolder(mainDir, movieDir, res);
         }
     }
 
@@ -130,13 +107,19 @@ public class Main {
         if (doc == null)
             return null;
 
-        Elements names = doc.select("div.FSP1Dd");
-        Elements years = doc.select("div.Rlw09");
-        if (names.size() == 0 || years.size() == 0)
+        Elements names = doc.select(".deIvCb");g
+        Elements years = doc.select(".tAd8D");
+
+
+        if (names.size() == 0 || years.size() == 0) {
+            System.out.println("Unable to find elements");
             return null;
+        }
 
         String finalResult = years.get(0).text().substring(0, 4) + " - " + names.get(0).text();
         return finalResult.replaceAll(":", " -");
     }
+
+
 }
 
