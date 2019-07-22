@@ -11,13 +11,13 @@ import java.util.regex.Pattern;
 public class Main {
 
     private static final String GOOGLE_SEARCH_URL = "https://www.google.com/search";
+    private static final int MAXIMUM_RETRY = 5;
     private static int count = 0;
 
     public static void main(String[] args) {
         System.out.println("Enter the main directory:");
         Scanner scanner = new Scanner(System.in);
         String mainDir = scanner.next();
-        System.out.println("Ok, wait for some time...");
         fixDirectory(mainDir);
         System.out.println(count + " Folders fixed!");
     }
@@ -43,38 +43,34 @@ public class Main {
 //        if (isOk(movieDir)) {
 //            return;
 //        }
-        String correctedName = correctName(movieDir);
-        System.out.println(correctedName);
-        String res = searchMovie(correctedName);
+        String cleanName = cleanName(movieDir);
+        String res = null;
+
+        for (int i = 0; i < MAXIMUM_RETRY; i++) {
+            res = searchMovie(cleanName);
+            if (res != null)
+                break;
+        }
+
         if (res == null) {
-            res = searchMovie(correctedName);
-            if (res == null)
-                System.out.println("Unable to find in Google: " + mainDir + "\\" + movieDir);
-            else
-                renameFolder(mainDir, movieDir, res);
+            System.out.println(mainDir + "\\" + movieDir + ": Search failed!");
         } else {
             renameFolder(mainDir, movieDir, res);
+            count++;
+            System.out.println(mainDir + "\\" + res + ": Done!");
         }
     }
 
-    private static void renameFolder(String directorDir, String movieDir, String res) {
-        File folder = new File(directorDir + "\\" + movieDir);
-        File newFolder = new File(directorDir + "\\" + res);
+    private static void renameFolder(String mainDir, String oldName, String newName) {
+        File folder = new File(mainDir + "\\" + oldName);
+        File newFolder = new File(mainDir + "\\" + newName);
         boolean renamed = folder.renameTo(newFolder);
         if (!renamed) {
-            System.out.println("Unable to rename: " + directorDir + "\\" + movieDir);
-            return;
+            System.out.println(mainDir + "\\" + oldName + ": Unable to rename!");
         }
-        count();
     }
 
-    private static void count() {
-        count++;
-        if (count % 100 == 0)
-            System.out.println(count + " Folders fixed!");
-    }
-
-    private static String correctName(String movieDir) {
+    private static String cleanName(String movieDir) {
         String year = null;
         String regEx = "[0-9]{4}";
         Pattern pattern = Pattern.compile(regEx);
@@ -102,24 +98,27 @@ public class Main {
         try {
             doc = Jsoup.connect(searchURL).userAgent("Mozilla/5.0").get();
         } catch (IOException e) {
-            e.printStackTrace();
+            return null;
         }
+
         if (doc == null)
             return null;
 
-        Elements names = doc.select(".deIvCb");g
-        Elements years = doc.select(".tAd8D");
+        Elements nameElements = doc.select(".deIvCb");
+        Elements yearElements = doc.select(".tAd8D");
 
-
-        if (names.size() == 0 || years.size() == 0) {
-            System.out.println("Unable to find elements");
+        if (nameElements.size() == 0 || yearElements.size() == 0)
             return null;
-        }
 
-        String finalResult = years.get(0).text().substring(0, 4) + " - " + names.get(0).text();
-        return finalResult.replaceAll(":", " -");
+        String name = nameElements.get(0).text();
+        if (yearElements.get(0).text().length() < 4)
+            return null;
+        String year = yearElements.get(0).text().substring(0, 4);
+        if (!year.matches("[0-9]{4}"))
+            return null;
+
+        return (year + " - " + name).replaceAll(":", " -");
     }
-
 
 }
 
