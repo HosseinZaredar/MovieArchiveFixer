@@ -9,7 +9,7 @@ Folder names were like this:
 - The Matrix (دوبله)
 - Apocalypse_Now_1979
 
-He wanted all direcory names to be like this:
+He wanted all directory names to be like this:
 - 1951 - Strangers on a Train
 
 So, I wrote a command-line application to take care of this. it extracts the possible movie name from directory name,
